@@ -56,7 +56,7 @@ decrypt_chart() {
           fi
           if [[ "${BUILD_DEPS_AND_PACKAGE}" == "true" ]];
           then
-            echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Dependencies build and package${NOC}"
+            echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Dependencies build and package${NOC}" 1>&2
             "$HELM_CMD" dep build "$chart" && "$HELM_CMD" package "$chart"
           fi
           (( ++COUNT_CHART ))
@@ -72,7 +72,7 @@ decrypt_helm_vars() {
   then
     if [ -f "$file" ];
       then
-          echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Decrypt${NOC}"
+          echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Decrypt${NOC}" 1>&2
           "$HELM_CMD" secrets dec "$file"
           (( ++COUNT_FILES ))
       else
@@ -85,7 +85,7 @@ decrypt_helm_vars() {
 function cleanup {
   case "${CURRENT_COMMAND}" in
     $SUPPORTED_COMMANDS)
-      echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Cleanup${NOC}"
+      echo -e "${YELLOW}>>>>>>${NOC} ${BLUE}Cleanup${NOC}" 1>&2
       for file in "${@}";
       do
         if [[ "$file" =~ $MATCH_FILES_ARGS ]];
@@ -97,16 +97,16 @@ function cleanup {
 }
 
 function helm_cmd {
-    echo ""
+    echo "" 1>&2
     trap 'cleanup $@' INT TERM EXIT
     $(echo "${HELM_CMD} $*" | sed -e 's/secrets.yaml/secrets.yaml.dec/g') >&3
     local status=$?
     if [ "$status" -ne 0 ]; then
-        echo ""
+        echo "" 1>&2
         cleanup "$@"
         exit 1
     else
-        echo ""
+        echo "" 1>&2
         cleanup "$@"
         exit 0
     fi
@@ -124,7 +124,7 @@ esac
 
 if [ "$COUNT_CHART" -eq 0 ] && [ "$COUNT_FILES" -eq 0 ] && [ "$COUNT_CHART_FAILED" -gt 0 ] && [ "$COUNT_FILES_FAILED" -gt 0 ];
 then
-    echo -e "${RED}Error no secrets found. No secret files in chart or secrets files defined${NOC}"
+    echo -e "${RED}Error no secrets found. No secret files in chart or secrets files defined${NOC}" 1>&2
     exit 1
 fi
 

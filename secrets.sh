@@ -155,13 +155,13 @@ get_md5() {
   elif [[ -x $(which m5sum) ]]; then
     md5sum "$1"
   else
-    echo "Can't find md5 (OS X) or md5sum (Linux) command!"
+    echo "Can't find md5 (OS X) or md5sum (Linux) command!" 1>&2
     exit 1
   fi
 }
 
 encrypt_helper() {
-  [[ -e "$yml" ]] || (echo "File not exist" && exit 1)
+  [[ -e "$yml" ]] || (echo "File not exist" 1>&2 && exit 1)
   sops_config
   count_match=0
   matched_dir=""
@@ -178,16 +178,16 @@ encrypt_helper() {
    then
        if [ "$(grep -C10000 'sops:' "$yml" | grep -c 'version:')" -gt 0 ];
        then
-          echo "Already Encrypted."
+          echo "Already Encrypted." 1>&2
           return
       fi
           sops --config "${SOPS_CONF_PATH}" -e -i "$yml"
-          echo "Encrypted $yml"
+          echo "Encrypted $yml" 1>&2
           return
   fi
   if [ "$count_match" -eq 0 ];
    then
-       echo "Could not encrypt $yml. No .sops.yaml config file found."
+       echo "Could not encrypt $yml. No .sops.yaml config file found." 1>&2
        exit 1
   fi
 }
@@ -200,14 +200,17 @@ enc() {
   chart=$1
   yml=""
   vars_load "$chart"
-  echo "Encrypting $chart"
+  echo "Encrypting $chart" 1>&2
   encrypt_helper "$yml"
 }
 
 decrypt_helper() {
-  [[ -e "$yml" ]] || (echo "File not exist" && exit 1)
+  [[ -e "$yml" ]] || (echo "File not exist" 1>&2 && exit 1)
+  local decrypted
   sops_config
-  sops -d "$yml" > "${yml}${DEC_SUFFIX}"
+
+  decrypted = `sops -d "$yml"`
+  echo $decrypted > "${yml}${DEC_SUFFIX}"
 }
 
 dec() {
@@ -219,9 +222,9 @@ dec() {
   yml=""
   vars_load "$chart"
   if [[ -z "$yml" ]]; then
-    echo "$chart doesn't have secrets.yaml file."
+    echo "$chart doesn't have secrets.yaml file." 1>&2
   else
-    echo "Decrypting $chart"
+    echo "Decrypting $chart" 1>&2
     decrypt_helper "$yml"
   fi
 }
@@ -233,7 +236,7 @@ dec_deps() {
   fi
   chart=$1
   chart_path="${chart%/*}"
-  echo "Decrypting ${chart}'s dependencies."
+  echo "Decrypting ${chart}'s dependencies." 1>&2
   deps=$(helm dep list "$chart" | awk 'NR>=2 { print $1 }' | xargs)
   yml=""
   for dep in $deps
@@ -261,19 +264,19 @@ clean() {
   then
      rm -v  "${dec_file}"
   else
-     echo "Nothing to Clean"
+     echo "Nothing to Clean" 1>&2
   fi
   done < <(find "${basedir}" -type f -name "*.yaml${DEC_SUFFIX}" )
 }
 
 view_helper() {
-  [[ -e "$yml" ]] || (echo "File not exist" && exit 1)
+  [[ -e "$yml" ]] || (echo "File not exist" 1>&2 && exit 1)
   sops_config
   sops -d "$yml"
 }
 
 edit_helper() {
-  [[ -e "$yml" ]] || (echo "File not exist" && exit 1)
+  [[ -e "$yml" ]] || (echo "File not exist" 1>&2 && exit 1)
   sops_config
   exec_edit "${yml}${DEC_SUFFIX}"
 }
@@ -304,7 +307,7 @@ case "${1:-"help"}" in
   "enc"):
     if [[ $# -lt 2 ]]; then
       enc_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     enc "$2"
@@ -313,7 +316,7 @@ case "${1:-"help"}" in
   "dec"):
     if [[ $# -lt 2 ]]; then
       dec_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     dec "$2"
@@ -321,7 +324,7 @@ case "${1:-"help"}" in
   "clean"):
     if [[ $# -lt 2 ]]; then
       clean_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     clean "$2"
@@ -329,7 +332,7 @@ case "${1:-"help"}" in
   "dec-deps"):
     if [[ $# -lt 2 ]]; then
       dec_deps_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     dec_deps "$2"
@@ -337,7 +340,7 @@ case "${1:-"help"}" in
   "view"):
     if [[ $# -lt 2 ]]; then
       view_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     view "$2"
@@ -345,7 +348,7 @@ case "${1:-"help"}" in
   "edit"):
     if [[ $# -lt 2 ]]; then
       edit_usage
-      echo "Error: Chart package required."
+      echo "Error: Chart package required." 1>&2
       exit 1
     fi
     edit "$2"

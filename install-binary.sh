@@ -27,7 +27,7 @@ esac
 HELM_WRAPPER="${HELM_DIR}/helm-wrapper"
 
 if hash sops 2>/dev/null; then
-    echo "sops is already installed:"
+    echo "sops is already installed:" 1>&2
     sops --version
 else
 
@@ -51,13 +51,13 @@ else
             then
                 sudo dpkg -i /tmp/sops.deb;
             else
-                echo -e "${RED}Wrong SHA256${NOC}"
+                echo -e "${RED}Wrong SHA256${NOC}" 1>&2
             fi
         else
-            echo -e "${RED}Sorry only installation via dpkg (aka Debian distros) is currently supported${NOC}"
+            echo -e "${RED}Sorry only installation via dpkg (aka Debian distros) is currently supported${NOC}" 1>&2
         fi
     else
-        echo -e "${RED}No SOPS package available${NOC}"
+        echo -e "${RED}No SOPS package available${NOC}" 1>&2
         exit 1
     fi
 fi
@@ -67,13 +67,13 @@ if [ -x "$(command -v git --version)" ];
 then
     git config --global diff.sopsdiffer.textconv "sops -d"
 else
-    echo -e "${RED}[FAIL]${NOC} Install git command"
+    echo -e "${RED}[FAIL]${NOC} Install git command" 1>&2
     exit 1
 fi
 
 ### Helm-secrets wrapper for helm command with auto decryption and cleanup on the fly
-echo ""
-echo -ne "${YELLOW}*${NOC} Helm-secrets wrapper for helm binary: "
+echo "" 1>&2
+echo -ne "${YELLOW}*${NOC} Helm-secrets wrapper for helm binary: " 1>&2
 if [ -f "${HELM_PLUGIN_DIR}/wrapper.sh" ];
 then
     ln -sf "${HELM_PLUGIN_DIR}/wrapper.sh" "${HELM_WRAPPER}"
@@ -81,7 +81,7 @@ fi
 
 if [ -f ${HELM_WRAPPER} ];
 then
-    echo -e "${GREEN}${HELM_WRAPPER}${NOC}"
+    echo -e "${GREEN}${HELM_WRAPPER}${NOC}" 1>&2
 else
-    echo -e "${RED}No ${HELM_WRAPPER} installed${NOC}"
+    echo -e "${RED}No ${HELM_WRAPPER} installed${NOC}" 1>&2
 fi
